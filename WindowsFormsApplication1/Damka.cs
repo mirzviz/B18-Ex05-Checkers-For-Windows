@@ -18,6 +18,8 @@ namespace Checkers
         private Label LabelPlayer1 = new Label();
         private Label LabelPlayer2 = new Label();
         private CheckersButton[,] m_ButtonBoard;
+        private bool m_AButttonIsPressed;
+        private CheckersButton m_ButtonPressed;
 
         public Damka()
         {
@@ -37,7 +39,87 @@ namespace Checkers
             Controls.Add(LabelPlayer2);
             m_Board = new Board(m_GameSettingsForm.BoardSize);
             initializeButtons();
-            setButtonBoardToStartGame();
+            syncButtonBoardWithLogicalBoard();
+        }
+
+        private void syncButtonBoardWithLogicalBoard()
+        {
+            for(int i = 0; i < m_GameSettingsForm.BoardSize; i++)
+            {
+                for(int j = 0; j < m_GameSettingsForm.BoardSize; j++)
+                {
+                    Square currentSquareInLogicalBoard = m_Board.BoardMatrix[i, j];
+                    if (currentSquareInLogicalBoard == Square.EMPTY)
+                    {
+                        m_ButtonBoard[i, j].Text = " ";
+                    }
+                    else if (currentSquareInLogicalBoard == Square.K)
+                    {
+                        m_ButtonBoard[i, j].Text = "K";
+                    }
+                    else if (currentSquareInLogicalBoard == Square.O)
+                    {
+                        m_ButtonBoard[i, j].Text = "O";
+                    }
+                    else if (currentSquareInLogicalBoard == Square.U)
+                    {
+                        m_ButtonBoard[i, j].Text = "U";
+                    }
+                    else if (currentSquareInLogicalBoard == Square.X)
+                    {
+                        m_ButtonBoard[i, j].Text = "X";
+                    }
+                }
+            }
+        }
+
+        private void buttonFromBoard_Click(object sender, EventArgs e)
+        {
+            CheckersButton clickedButton = sender as CheckersButton;
+            if (clickedButton != null)
+            {
+                if (clickedButton.BackColor == Color.Gray)
+                {
+                    goto End;
+                }
+
+                if (!m_AButttonIsPressed)
+                {                    
+                    m_AButttonIsPressed = true;
+                    clickedButton.BackColor = Color.Aqua;
+                    m_ButtonPressed = clickedButton;
+                    goto End;
+                }
+
+                if(m_ButtonPressed == clickedButton)
+                {
+                    clickedButton.BackColor = Color.Empty;
+                    m_AButttonIsPressed = false;
+                    goto End;
+                }
+
+                Move move = twoButtonsToAMove(clickedButton);
+                if (!m_Board.Play(move))
+                {
+                    MessageBox.Show("Illegal Move!");
+                }
+               
+                m_AButttonIsPressed = false;
+                m_ButtonPressed.BackColor = Color.Empty;
+                syncButtonBoardWithLogicalBoard();
+
+                if (!m_Board.GameIsOnKeepPlaying)
+                {
+                    MessageBox.Show("The Game Is Over");
+                }
+            }
+
+            End:;
+        }
+
+        private Move twoButtonsToAMove(CheckersButton i_Button)
+        {
+            return new Move(m_ButtonPressed.RowInBoard, m_ButtonPressed.ColInBoard, i_Button.RowInBoard, i_Button.ColInBoard);
         }
 
         private void setButtonBoardToStartGame()
@@ -84,7 +166,12 @@ namespace Checkers
                     {
                         checkersButton.BackColor = Color.Gray;
                     }
+                    else
+                    {
+                        checkersButton.BackColor = Color.Empty;
+                    }
 
+                    checkersButton.Click += new EventHandler(buttonFromBoard_Click);
                     m_ButtonBoard[i, j] = checkersButton;
                     Controls.Add(checkersButton);
 

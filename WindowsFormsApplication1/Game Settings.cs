@@ -10,6 +10,15 @@ namespace Checkers
 {
     public partial class Game_Settings : Form
     {
+        private bool m_MultiplayerMode;
+        public bool MultiplayerMode
+        {
+            get
+            {
+                return m_MultiplayerMode;
+            }
+        }
+
         private int m_BoardSize;
         public int BoardSize
         {
@@ -47,6 +56,7 @@ namespace Checkers
         
         private void buttonDone_Click(object sender, EventArgs e)
         {
+            m_MultiplayerMode = CheckBoxPlayer2.Checked;
             if(radioButtonSize6.Checked == true)
             {
                 m_BoardSize = 6;
