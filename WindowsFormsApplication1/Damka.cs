@@ -20,7 +20,7 @@ namespace Checkers
         private CheckersButton[,] m_ButtonBoard;
         private bool m_AButttonIsPressed;
         private CheckersButton m_ButtonPressed;
-
+        
         public Damka()
         {
             InitializeComponent();
@@ -29,9 +29,11 @@ namespace Checkers
         private void Damka_Load(object sender, EventArgs e)
         {
             m_GameSettingsForm.ShowDialog();
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
             this.Font = new Font(this.Font, FontStyle.Bold);
             this.Size = new Size(m_GameSettingsForm.BoardSize * 50 + 100, m_GameSettingsForm.BoardSize * 50 + 100);
-            LabelPlayer1.Text = "Player2: " + m_Player1Score;
+            LabelPlayer1.Text = "Player1: " + m_Player1Score;
             LabelPlayer1.Location = new Point(50, 20);
             LabelPlayer2.Text = "Player2: " + m_Player2Score;
             LabelPlayer2.Location = new Point(LabelPlayer1.Location.X + 50 * (m_GameSettingsForm.BoardSize / 2), LabelPlayer1.Location.Y);
@@ -78,6 +80,7 @@ namespace Checkers
             CheckersButton clickedButton = sender as CheckersButton;
             if (clickedButton != null)
             {
+
                 if (clickedButton.BackColor == Color.Gray)
                 {
                     goto End;
@@ -86,7 +89,7 @@ namespace Checkers
                 if (!m_AButttonIsPressed)
                 {                    
                     m_AButttonIsPressed = true;
-                    clickedButton.BackColor = Color.Aqua;
+                    clickedButton.BackColor = Color.SkyBlue;
                     m_ButtonPressed = clickedButton;
                     goto End;
                 }
@@ -103,18 +106,63 @@ namespace Checkers
                 {
                     MessageBox.Show("Illegal Move!");
                 }
-               
+
+                handleGameOverAndRematch();
+
                 m_AButttonIsPressed = false;
                 m_ButtonPressed.BackColor = Color.Empty;
-                syncButtonBoardWithLogicalBoard();
-
-                if (!m_Board.GameIsOnKeepPlaying)
+                if (!m_GameSettingsForm.MultiplayerMode)
                 {
-                    MessageBox.Show("The Game Is Over");
+                    if (m_Board.Turn == Square.O)
+                    {
+                        m_Board.ComputerPlay();
+                    }
                 }
+
+                handleGameOverAndRematch();
+                syncButtonBoardWithLogicalBoard();
             }
 
             End:;
+        }
+
+        private void handleGameOverAndRematch()
+        {
+            if (!m_Board.GameIsOnKeepPlaying)
+            {
+                StringBuilder messege = new StringBuilder();
+                messege.AppendFormat("{0} Won!", findWinnersNameAndGivePointsToWinner());
+                messege.AppendLine();
+                messege.AppendFormat("Another Round?");
+                DialogResult result = MessageBox.Show(messege.ToString(), "Damka", MessageBoxButtons.YesNo);
+                if (result == DialogResult.No)
+                {
+                    this.Close();
+                }
+                else
+                {
+                    m_Board.initializeBoard();
+                    LabelPlayer1.Text = "Player1: " + m_Player1Score;
+                    LabelPlayer2.Text = "Player2: " + m_Player2Score;
+                }
+            }
+        }
+        private string findWinnersNameAndGivePointsToWinner()
+        {
+            int difference = ((m_Board.NumberOfK * 4) + m_Board.NumberOfX) - ((m_Board.NumberOfU * 4) + m_Board.NumberOfO);
+            string winner;
+            if (difference > 0)
+            {                                       // X won = player1 won
+                winner = "Player 1";
+                m_Player1Score += difference;
+            }
+            else
+            {
+                winner = "Plaer 2";
+                m_Player2Score -= difference;
+            }
+
+            return winner;
         }
 
         private Move twoButtonsToAMove(CheckersButton i_Button)
